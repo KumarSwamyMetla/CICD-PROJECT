@@ -1,66 +1,42 @@
-name: MERN Fullstack CI/CD
+name: Deploy Vite React App to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-      # Checkout source code
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Setup Node for backend
-      - name: Setup Node for backend
-        uses: actions/setup-node@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          
-      # Install backend dependencies
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm install
+          node-version: 18
 
-      # (Optional) Run backend tests
-      # - name: Run backend tests
-      #   working-directory: ./backend
-      #   run: npm test
-      
-      # Setup Node for frontend
-      - name: Setup Node for frontend
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      # Install frontend dependencies
-      - name: Install frontend dependencies
+      - name: Install dependencies
         working-directory: ./frontend
-        run: npm install
-        
-      # Build frontend
-      - name: Build frontend
+        run: npm ci
+
+      - name: Build the project
         working-directory: ./frontend
         run: npm run build
-        
-      # Set up Docker Buildx (for multi-platform and build caching)
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
 
-      # Login to DockerHub (optional, if you push images)
-      # - name: Login to DockerHub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKER_USERNAME }}
-      #     password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Configure Git identity
+        run: |
+          git config --global user.name "KumarSwamyMetla"
+          git config --global user.email "Kumarmetla@98"
 
-      # Build Docker images
-      - name: Build Docker images
-        run: docker compose build
-
-      # Deploy Docker containers
-      - name: Deploy Docker Containers
-        run: docker compose up -d
+      - name: Authenticate and deploy to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: ./frontend
+        run: |
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          npm run deploy
